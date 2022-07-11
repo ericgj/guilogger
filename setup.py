@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
-tests_require = ["pytest", "pytest-random-order"]
+tests_require = []
 
 setup(
     name="guilogger",
-    version="0.1",
+    version="0.2",
     description="GUI Logger",
     license="MIT",
     author="Eric Gjertsen",
