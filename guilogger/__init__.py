@@ -6,7 +6,7 @@ from threading import Thread
 from time import sleep
 from tkinter.font import Font
 from tkinter.scrolledtext import ScrolledText
-from tkinter import Tk
+from tkinter import Tk, Text
 from tkinter import ttk
 
 LOGGING_DONE = logging.INFO + 5
@@ -68,7 +68,19 @@ class App(Tk):
         self.ok_button = ttk.Button(self.button_frame, text="Ok", command=self.destroy)
         self.log_button = ttk.Button(self.button_frame, text="Show log", command=self.toggle_log)
         self.log_copy_button = ttk.Button(self.button_frame, text="Copy log", command=self.copy_log)
-        self.log_text_label = ttk.Label(self.frame, font=Font(self.frame, family="Courier", size=10), text="")
+        self.log_text_frame = ttk.Frame(self.frame, width=80, height=200)
+        self.log_text_label = Text(
+            self.log_text_frame, 
+            font=Font(self.frame, family="Courier", size=10), 
+            state='disabled',
+        )
+        self.log_text_scrollbar = ttk.Scrollbar(
+            self.log_text_frame, 
+            orient='vertical', 
+            command=self.log_text_label.yview
+        )
+        self.log_text_label['yscrollcommand'] = self.log_text_scrollbar.set
+
         self.init_pack_elements()
 
         s = ttk.Style()
@@ -104,16 +116,20 @@ class App(Tk):
         self.geometry("")
 
     def update_elements(self):
-        self.log_text_label.configure(text=self.log_text)
+        self.log_text_label.configure(state='normal')  # enable setting text in widget
+        self.log_text_label.replace('1.0','end',self.log_text)
+        self.log_text_label.configure(state='disabled')
         if self.show_log:
             self.log_button.configure(text="Hide log")
-            self.log_text_label.forget()
-            self.log_text_label.pack(fill="x", padx=10, pady=5, expand=True)
+            self.log_text_frame.forget()
+            self.log_text_frame.pack(fill="x", expand=True, padx=10, pady=5)
+            self.log_text_label.pack(fill="y", side="left")
+            self.log_text_scrollbar.pack(fill="y", side="right")
+            self.log_text_label.yview('end')
         else:
             self.log_button.configure(text="Show log")
-            self.log_text_label.forget()
+            self.log_text_frame.forget()
         self.geometry("")
-
 
     def toggle_log(self):
         self.show_log = not self.show_log

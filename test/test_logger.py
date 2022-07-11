@@ -15,7 +15,7 @@ def main(args=sys.argv[1:], *, log_handler):
 
     try:
         for arg in args:
-            sleep(2)
+            sleep(1)
             logger.info(f"Processing: {arg}")
         logger.warning("watch out")
         raise ValueError("Boom")
