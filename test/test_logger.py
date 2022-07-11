@@ -4,16 +4,25 @@ from time import sleep
 
 import guilogger
 
-@guilogger.app(level=logging.INFO, title="testing", max_steps=10)
+FORMATTER = logging.Formatter(fmt='%(levelname)1s | %(asctime)s | %(name)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S') 
+
+@guilogger.app(level=logging.INFO, formatter=FORMATTER, title="testing", max_steps=len(sys.argv)-1)
 def main(args=sys.argv[1:], *, log_handler):
     logger = logging.getLogger(__name__)
     logger.level = logging.INFO
     logger.addHandler(log_handler)
     logger.propagate = True
 
-    for arg in args:
-        sleep(2)
-        logger.info(f"Processing: {arg}")
+    try:
+        for arg in args:
+            sleep(2)
+            logger.info(f"Processing: {arg}")
+        logger.warning("watch out")
+        raise ValueError("Boom")
+    except Exception as e:
+        logger.exception(e)
+        raise e
+
     guilogger.log_done(logger)
 
 
