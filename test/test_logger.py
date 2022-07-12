@@ -17,8 +17,8 @@ def main(args=sys.argv[1:], *, log_handler):
         for arg in args:
             sleep(1)
             logger.info(f"Processing: {arg}")
-        logger.warning("watch out")
-        raise ValueError("Boom")
+        logger.warning("watch out! " * 200)
+        raise ValueError("Boom! " * 200)
     except Exception as e:
         logger.exception(e)
         raise e

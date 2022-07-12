@@ -10,6 +10,7 @@ from tkinter import Tk, Text
 from tkinter import ttk
 
 LOGGING_DONE = logging.INFO + 5
+MAX_LABEL_LENGTH = 500
 
 def log_done(logger, msg: str = 'Done.'):
     logger.log(LOGGING_DONE, msg)
@@ -63,15 +64,16 @@ class App(Tk):
             maximum=max_steps,
             mode='determinate',
         )
-        self.label = ttk.Label(self.frame, text="", width=100)
+        self.label = WrappingLabel(self.frame, text="", width=100)
         self.button_frame = ttk.Frame(self.frame)
         self.ok_button = ttk.Button(self.button_frame, text="Ok", command=self.destroy)
         self.log_button = ttk.Button(self.button_frame, text="Show log", command=self.toggle_log)
         self.log_copy_button = ttk.Button(self.button_frame, text="Copy log", command=self.copy_log)
-        self.log_text_frame = ttk.Frame(self.frame, width=80, height=200)
+        self.log_text_frame = ttk.Frame(self.frame, height=200)
         self.log_text_label = Text(
             self.log_text_frame, 
             font=Font(self.frame, family="Courier", size=10), 
+            wrap='word',
             state='disabled',
         )
         self.log_text_scrollbar = ttk.Scrollbar(
@@ -123,9 +125,9 @@ class App(Tk):
             self.log_button.configure(text="Hide log")
             self.log_text_frame.forget()
             self.log_text_frame.pack(fill="x", expand=True, padx=10, pady=5)
-            self.log_text_label.pack(fill="y", side="left")
-            self.log_text_scrollbar.pack(fill="y", side="right")
-            self.log_text_label.yview('end')
+            self.log_text_label.pack(fill="both", side="left", expand=True)
+            self.log_text_scrollbar.pack(fill="both", side="left", expand=True)
+            self.log_text_label.yview('end')  # scroll to bottom
         else:
             self.log_button.configure(text="Show log")
             self.log_text_frame.forget()
@@ -148,7 +150,7 @@ class App(Tk):
             self.progress.configure(style='warning.Horizontal.TProgressbar')
         else:
             self.progress.configure(style='default.Horizontal.TProgressbar')
-        self.label.config(text=msg)
+        self.label.config(text=ellipsis(MAX_LABEL_LENGTH,msg))
         self.update_elements()
 
     def display_done(self, msg: str):
@@ -160,7 +162,7 @@ class App(Tk):
             self.progress.configure(style='warning.Horizontal.TProgressbar')
         else:
             self.progress.configure(style='default.Horizontal.TProgressbar')
-        self.label.config(text=msg)
+        self.label.config(text=ellipsis(MAX_LABEL_LENGTH,msg))
         self.update_elements()
         
     def display_error(self, msg: str):
@@ -169,8 +171,13 @@ class App(Tk):
             self.progress.step(new_steps)
             self.cur_steps = self.cur_steps + new_steps
         self.progress.configure(style='error.Horizontal.TProgressbar')
-        self.label.config(text=f"ERROR: {msg}")
+        self.label.config(text=ellipsis(MAX_LABEL_LENGTH,f"ERROR: {msg}"))
         self.update_elements()
+
+class WrappingLabel(ttk.Label):
+    def __init__(self, master: None, **kwargs):
+        ttk.Label.__init__(self, master, **kwargs)
+        self.bind('<Configure>', lambda _: self.configure(wraplength=self.winfo_width()))
 
 
 class TkLogHandler(logging.Handler):
@@ -195,4 +202,5 @@ class TkLogHandler(logging.Handler):
 
 
 
-
+def ellipsis(length: int, s: str) -> str:
+    return s if len(s) <= length else f"{s[0:(length-3)]}..."
