@@ -8,12 +8,9 @@ from tkinter import Tk, Text
 from tkinter import ttk
 from typing import Optional, Union, List, Tuple
 
-LOGGING_DONE = logging.INFO + 5
+LOGGING_DONE_LEVEL = logging.INFO + 5
+LOGGING_DONE_NAME = "DONE"
 MAX_LABEL_LENGTH = 500
-
-
-def log_done(logger, msg: str = "Done."):
-    logger.log(LOGGING_DONE, msg)
 
 
 def app(
@@ -22,10 +19,13 @@ def app(
     formatter=logging.Formatter(),
     title=sys.argv[0],
     max_steps=100,
+    close_after=False,
 ):
     def _app(fn):
         def __app(*args):
-            handler = TkLogHandler(level=level, title=title, max_steps=max_steps)
+            handler = TkLogHandler(
+                level=level, title=title, max_steps=max_steps, close_after=close_after
+            )
             handler.setFormatter(formatter)
             handler.setLevel(level)
 
@@ -45,10 +45,12 @@ def app(
                 kwargs={"log_handler": queue_handler},
             )
             try:
+                patch_logging()
                 cli_thread.start()
                 handler.start()
                 cli_thread.join()
             finally:
+                unpatch_logging()
                 listener.stop()
 
         return __app
@@ -202,12 +204,16 @@ class WrappingLabel(ttk.Label):
 
 
 class TkLogHandler(logging.Handler):
-    def __init__(self, level: int, *, title: str, max_steps: int):
+    def __init__(self, level: int, *, title: str, max_steps: int, close_after: bool):
         super().__init__(level)
         self.app = App(title=title, max_steps=max_steps)
+        self.close_after = close_after
 
     def start(self):
         self.app.mainloop()
+
+    def stop(self):
+        self.app.quit()
 
     def emit(self, record):
         level = record.levelno
@@ -216,10 +222,32 @@ class TkLogHandler(logging.Handler):
         self.app.add_log(level, msg, log_msg)
         if level >= logging.ERROR:
             self.app.display_error(msg)
-        elif level == LOGGING_DONE:
+        elif level == LOGGING_DONE_LEVEL:
             self.app.display_done(msg)
+            if self.close_after:
+                self.stop()
         else:
             self.app.display_status(msg)
+
+
+def patch_logging():
+    logging._levelToName[LOGGING_DONE_LEVEL] = "DONE"
+    logging._nameToLevel[LOGGING_DONE_NAME] = LOGGING_DONE_LEVEL
+    logging.Logger.done = log_done
+
+
+def unpatch_logging():
+    if LOGGING_DONE_LEVEL in logging._levelToName:
+        del logging._levelToName[LOGGING_DONE_LEVEL]
+    if LOGGING_DONE_NAME in logging._nameToLevel:
+        del logging._nameToLevel[LOGGING_DONE_NAME]
+    if hasattr(logging.Logger, "done"):
+        del logging.Logger.done
+
+
+def log_done(logger, msg: str = "Done.", *args, **kwargs):
+    if logger.isEnabledFor(LOGGING_DONE_LEVEL):
+        logger._log(LOGGING_DONE_LEVEL, msg, args, **kwargs)
 
 
 def ellipsis(length: int, s: str) -> str:
