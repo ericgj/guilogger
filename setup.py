@@ -4,7 +4,7 @@ tests_require = []
 
 setup(
     name="guilogger",
-    version="0.2",
+    version="0.3",
     description="GUI logger + progress bar",
     license="MIT",
     author="Eric Gjertsen",
