@@ -190,6 +190,9 @@ class App(Tk):
         self.update_elements()
 
 
+# Credit: https://stackoverflow.com/a/62485627/268977
+
+
 class WrappingLabel(ttk.Label):
     def __init__(self, master: Optional[ttk.Frame] = None, **kwargs):
         ttk.Label.__init__(self, master, **kwargs)
