@@ -4,7 +4,7 @@ tests_require = []
 
 setup(
     name="guilogger",
-    version="0.3",
+    version="0.4",
     description="GUI logger + progress bar",
     license="MIT",
     author="Eric Gjertsen",
@@ -22,4 +22,3 @@ setup(
     extras_require={"test": tests_require},  # to make pip happy
     zip_safe=False,  # to make mypy happy
 )
-
