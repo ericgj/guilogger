@@ -15,7 +15,7 @@ FORMATTER = logging.Formatter(
     formatter=FORMATTER,
     title="testing",
     max_steps=len(sys.argv) - 1,
-    close_after=True,
+    close_after=False,
 )
 def main(args=sys.argv[1:], *, log_handler):
     logger = logging.getLogger(__name__)
@@ -32,8 +32,8 @@ def main(args=sys.argv[1:], *, log_handler):
     except Exception as e:
         logger.exception(e)
         raise e
-
-    logger.done()
+    finally:
+        logger.done()
 
 
 if __name__ == "__main__":

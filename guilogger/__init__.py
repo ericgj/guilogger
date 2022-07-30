@@ -110,6 +110,14 @@ class App(Tk):
         s.configure("error.Horizontal.TProgressbar", foreground="red", background="red")
 
     @property
+    def has_error(self) -> bool:
+        return any(
+            (level, msg, log_msg)
+            for (level, msg, log_msg) in self.logs
+            if level >= logging.ERROR
+        )
+
+    @property
     def has_warnings(self) -> bool:
         return any(
             (level, msg, log_msg)
@@ -163,7 +171,9 @@ class App(Tk):
         if new_steps > 0:
             self.progress.step(new_steps)
             self.cur_steps = self.cur_steps + new_steps
-        if self.has_warnings:
+        if self.has_error:
+            self.progress.configure(style="error.Horizontal.TProgressbar")
+        elif self.has_warnings:
             self.progress.configure(style="warning.Horizontal.TProgressbar")
         else:
             self.progress.configure(style="default.Horizontal.TProgressbar")
@@ -175,20 +185,13 @@ class App(Tk):
         if new_steps > 0:
             self.progress.step(new_steps)
             self.cur_steps = self.cur_steps + new_steps
-        if self.has_warnings:
+        if self.has_error:
+            self.progress.configure(style="error.Horizontal.TProgressbar")
+        elif self.has_warnings:
             self.progress.configure(style="warning.Horizontal.TProgressbar")
         else:
             self.progress.configure(style="default.Horizontal.TProgressbar")
         self.label.config(text=ellipsis(MAX_LABEL_LENGTH, msg))
-        self.update_elements()
-
-    def display_error(self, msg: str):
-        new_steps = self.max_steps - self.cur_steps - 0.001
-        if new_steps > 0:
-            self.progress.step(new_steps)
-            self.cur_steps = self.cur_steps + new_steps
-        self.progress.configure(style="error.Horizontal.TProgressbar")
-        self.label.config(text=ellipsis(MAX_LABEL_LENGTH, f"ERROR: {msg}"))
         self.update_elements()
 
 
@@ -220,9 +223,7 @@ class TkLogHandler(logging.Handler):
         msg = record.message
         log_msg = self.format(record)
         self.app.add_log(level, msg, log_msg)
-        if level >= logging.ERROR:
-            self.app.display_error(msg)
-        elif level == LOGGING_DONE_LEVEL:
+        if level == LOGGING_DONE_LEVEL:
             self.app.display_done(msg)
             if self.close_after:
                 self.stop()
